@@ -11,22 +11,15 @@ double myfun(double *xx, double *par)
     double pi = 3.141592654;
 
     double gaus = alpha/sigma/sqrt(2*pi)*exp(-0.5*(E-mu)*(E-mu)/sigma/sigma);
+    double constant = beta/mu*(TMath::Erf((mu-E)/sqrt(2)/sigma)-TMath::Erf(-E/sqrt(2)/sigma));
     double exp_c1 = (beta)*lambda*exp((sigma*sigma*lambda*lambda+2*lambda*E)/2)/(exp(lambda*mu)-1);
     double exp1 = TMath::Erf((mu-E-sigma*sigma*lambda)/(TMath::Sqrt(2)*sigma))-TMath::Erf((-E-sigma*sigma*lambda)/sqrt(2)/sigma);
-    double constant = (1-alpha-beta)/mu*(TMath::Erf((mu-E)/sqrt(2)/sigma)-TMath::Erf(-E/sqrt(2)/sigma));
 
     return c*(gaus+exp_c1*exp1+constant);
 }
 
-int main(int argc,char **argv)
+void fit()
 {
-
-	string source = argv[1];
-	string R = argv[2];	
-	string Z = argv[2];	
-	string dirname = "/junofs/production/public/users/zhangfy/non-uniform/offline_J17v1r1-Pre1/Examples/Tutorial/share/cls/"+source+"/"+R+"_"+Z+"/";
-
-	TCanvas *c1 = new TCanvas();
     gStyle->SetOptFit(1);
     gStyle->SetStatX(0.4);
     gStyle->SetStatY(0.9);
@@ -39,11 +32,9 @@ int main(int argc,char **argv)
 
 	TChain *t = new TChain("evt");
 
-//	t->Add("/junofs/production/public/users/zhangfy/non-uniform/offline_J17v1r1-Pre1/Examples/Tutorial/share/cls/Co60/10000_10000/evt_*root");
-	string filename = dirname+"evt_*root";
-	t->Add(&filename[0]);
+	t->Add("/junofs/production/public/users/zhangfy/non-uniform/offline_J17v1r1-Pre1/Examples/Tutorial/share/cls/Co60/10000_10000/evt_*root");
 	
-	t->Draw("totalPE>>h(200,0,0)","totalPE>0","",40000);
+	t->Draw("totalPE>>h(200,0,0)","","",40000);
 	TH1F *h = (TH1F*)gDirectory->Get("h");
 
 	int maxbin = h->GetMaximumBin();
@@ -84,22 +75,5 @@ int main(int argc,char **argv)
 	t->Draw(Form("totalPE>>h(%i,%i,%i)",int(5*sigma),int(mean-6*sigma),int(mean-6*sigma)+int(5*sigma)*2),"","",40000);	
 	h = (TH1F*)gDirectory->Get("h");
 	h->Fit(f);
-	pars = f->GetParameters();
-	double *epars = f->GetParErrors();
-	
-	filename = dirname+"result.C";
-	c1->SaveAs(&filename[0]);
-	filename = dirname+"result.png";
-	c1->SaveAs(&filename[0]);
 
-	filename = dirname+"result";
-
-	ofstream fout(&filename[0]);
-	for(int i=0;i<6;i++){
-		fout << pars[i] <<"\t" << epars[i] <<"\t";
-	}
-
-	fout << "\n";
-
-	return 0;
 }
